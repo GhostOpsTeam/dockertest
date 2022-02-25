@@ -7,13 +7,7 @@ LABEL author.name="TheVan" \
 
 RUN DEBIAN_FRONTEND=noninteractive
 
-
-#Thiết lập thư mục hiện tại
-#directory used in any further RUN, COPY, and ENTRYPOINT
-ENV APP_PATH /venv
-WORKDIR $APP_PATH
-
-#Set time zone
+# Set the timezone.
 ENV TZ=Asia/Ho_Chi_Minh
 RUN set -x \
     && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
@@ -22,7 +16,8 @@ RUN set -x \
 #Cập nhật các gói & cài NGINX
 RUN set -x \
     && apt-get update \
-    && apt-get install -y nginx nano vim
+    && apt-get upgrade \
+    && apt-get install -y nginx
 
 #Cài mySQL
 RUN set -x \
@@ -30,8 +25,11 @@ RUN set -x \
     && echo "mysql-server mysql-server/root_password_again password root" | debconf-set-selections \
     && apt-get install -y mysql-server
 
-#Chuyển file start.sh vào thư mục chính
+#Thiết lập thư mục hiện tại
+#directory used in any further RUN, COPY, and ENTRYPOINT
+WORKDIR /venv
 
+#Chuyển file start.sh vào thư mục chính
 COPY start.sh /venv
 
 #Set quyền thư mục
@@ -42,5 +40,5 @@ RUN set -x \
 ENTRYPOINT ["/venv/start.sh"]
 
 #Thiết lập khi tạo container từ image sẽ mở cổng 8080 ở mạng mà container nối vào
-EXPOSE 8080
+EXPOSE 80
 
