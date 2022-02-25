@@ -1,44 +1,30 @@
-#Xây dựng image mới từ image Ubuntu
-FROM ubuntu:16.04
+# xây dựng image mới từ image centos:latest (CENTOS 7)
+FROM centos:latest
 
-#Ký tên tác giả
-LABEL author.name="TheVan" \
-    author.email="van.nguyenthe@thecoffeehouse.vn"
-
-RUN DEBIAN_FRONTEND=noninteractive
-
-# Set the timezone.
-ENV TZ=Asia/Ho_Chi_Minh
-RUN set -x \
-    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
-    && echo $TZ > /etc/timezone
-
-#Cập nhật các gói & cài NGINX
-RUN set -x \
-    && apt-get update \
-    && apt-get upgrade \
-    && apt-get install -y nginx
-
-#Cài mySQL
-RUN set -x \
-    && echo "mysql-server mysql-server/root_password password root" | debconf-set-selections \
-    && echo "mysql-server mysql-server/root_password_again password root" | debconf-set-selections \
-    && apt-get install -y mysql-server
+# Cập nhật các gói và cài vào đó HTTPD, HTOP, VIM
+RUN yum update -y
+RUN yum install httpd httpd-tools -y
+RUN yum install epel-release -y \
+    && yum update -y \
+    && yum install htop -y \
+    && yum install vim -y
 
 #Thiết lập thư mục hiện tại
-#directory used in any further RUN, COPY, and ENTRYPOINT
-WORKDIR /venv
+WORKDIR /var/www/html
 
-#Chuyển file start.sh vào thư mục chính
-COPY start.sh /venv
+# Copy tất cả các file trong thư mục hiện tại (.)  vào WORKDIR
+ADD . /var/www/html
 
-#Set quyền thư mục
-RUN set -x \
-    && chmod a+x /venv/*
+#Thiết lập khi tạo container từ image sẽ mở cổng 80 ở mạng mà container nối vào
+EXPOSE 80
+
+# Khi chạy container tự động chạy ngay httpd
+ENTRYPOINT ["/usr/sbin/httpd"]
+
+#chạy terminate
+CMD ["-D", "FOREGROUND"]
 
 #Khi chạy container tự động chạy ngay start.sh
 ENTRYPOINT ["/venv/start.sh"]
 
-#Thiết lập khi tạo container từ image sẽ mở cổng 8080 ở mạng mà container nối vào
-EXPOSE 80
 
